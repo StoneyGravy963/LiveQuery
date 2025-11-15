@@ -12,6 +12,7 @@ import com.parse.ParseObject
 import com.parse.ParseQuery
 import com.parse.livequery.ParseLiveQueryClient
 import com.parse.livequery.SubscriptionHandling
+import java.net.URI
 
 class MainActivity : AppCompatActivity() {
 
@@ -41,6 +42,12 @@ class MainActivity : AppCompatActivity() {
 
             val mensaje = ParseObject("Mensajes")
             mensaje.put("texto", texto)
+
+            // Asigna permisos de lectura pública para que LiveQuery reciba el evento CREATE
+            val acl = com.parse.ParseACL()
+            acl.publicReadAccess = true
+            mensaje.acl = acl
+
             mensaje.saveInBackground { e ->
                 if (e == null) {
                     Toast.makeText(this, "✅ Guardado", Toast.LENGTH_SHORT).show()
@@ -71,7 +78,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun iniciarLiveQuery() {
-        liveQueryClient = ParseLiveQueryClient.Factory.getClient()
+        // Obtiene una instancia del cliente LiveQuery
+        // Se inicializa explícitamente con la URL de LiveQuery proporcionada por Back4App
+        val wssUri = URI("wss://livequeryuaa.b4a.io")
+        liveQueryClient = ParseLiveQueryClient.Factory.getClient(wssUri)
 
         val query = ParseQuery.getQuery<ParseObject>("Mensajes")
         val subscription = liveQueryClient?.subscribe(query)
