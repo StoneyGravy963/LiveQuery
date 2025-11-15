@@ -7,7 +7,6 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // 🔹 Inicializa Parse al arrancar la app
         Parse.initialize(
             Parse.Configuration.Builder(this)
                 .applicationId("TzNHtrZ6cGuXstwMGVNtIL3bpzJbAlGmVZvua8nF")
@@ -15,6 +14,5 @@ class MyApp : Application() {
                 .server("https://parseapi.back4app.com/")
                 .build()
         )
-        println("✅ Parse inicializado correctamente")
     }
 }

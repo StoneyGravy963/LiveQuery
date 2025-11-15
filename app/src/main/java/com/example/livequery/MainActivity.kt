@@ -16,45 +16,43 @@ import java.net.URI
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var recycler: RecyclerView
-    private lateinit var adapter: MensajeAdapter
-    private val mensajes = mutableListOf<ParseObject>()
-    private var liveQueryClient: ParseLiveQueryClient? = null
+    private lateinit var listaMensajesView: RecyclerView
+    private lateinit var mensajesAdapter: MensajeAdapter
+    private val listaMensajes = mutableListOf<ParseObject>()
+    private var clienteLiveQuery: ParseLiveQueryClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val inputMensaje = findViewById<EditText>(R.id.inputMensaje)
-        val btnEnviar = findViewById<Button>(R.id.btnEnviar)
-        recycler = findViewById(R.id.recyclerMensajes)
+        val campoEntradaMensaje = findViewById<EditText>(R.id.inputMensaje)
+        val botonEnviar = findViewById<Button>(R.id.btnEnviar)
+        listaMensajesView = findViewById(R.id.recyclerMensajes)
 
-        adapter = MensajeAdapter(this, mensajes)
-        recycler.layoutManager = LinearLayoutManager(this)
-        recycler.adapter = adapter
+        mensajesAdapter = MensajeAdapter(this, listaMensajes)
+        listaMensajesView.layoutManager = LinearLayoutManager(this)
+        listaMensajesView.adapter = mensajesAdapter
 
-        btnEnviar.setOnClickListener {
-            val texto = inputMensaje.text.toString().trim()
-            if (texto.isEmpty()) {
+        botonEnviar.setOnClickListener {
+            val textoMensaje = campoEntradaMensaje.text.toString().trim()
+            if (textoMensaje.isEmpty()) {
                 Toast.makeText(this, "Escribe un mensaje", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val mensaje = ParseObject("Mensajes")
-            mensaje.put("texto", texto)
+            val objetoMensaje = ParseObject("Mensajes")
+            objetoMensaje.put("texto", textoMensaje)
 
-            // Asigna permisos de lectura pública para que LiveQuery reciba el evento CREATE
-            val acl = com.parse.ParseACL()
-            acl.publicReadAccess = true
-            mensaje.acl = acl
+            val permisosACL = com.parse.ParseACL()
+            permisosACL.publicReadAccess = true
+            objetoMensaje.acl = permisosACL
 
-            mensaje.saveInBackground { e ->
+            objetoMensaje.saveInBackground { e ->
                 if (e == null) {
-                    Toast.makeText(this, "✅ Guardado", Toast.LENGTH_SHORT).show()
-                    inputMensaje.text.clear()
-                    // El LiveQuery se encargará de actualizar la UI
+                    Toast.makeText(this, "Guardado", Toast.LENGTH_SHORT).show()
+                    campoEntradaMensaje.text.clear()
                 } else {
-                    Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -64,13 +62,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun cargarMensajesIniciales() {
-        val query = ParseQuery.getQuery<ParseObject>("Mensajes")
-        query.orderByDescending("createdAt")
-        query.findInBackground { lista, e ->
+        val consulta = ParseQuery.getQuery<ParseObject>("Mensajes")
+        consulta.orderByDescending("createdAt")
+        consulta.findInBackground { listaRecibida, e ->
             if (e == null) {
-                mensajes.clear()
-                mensajes.addAll(lista)
-                adapter.notifyDataSetChanged()
+                listaMensajes.clear()
+                listaMensajes.addAll(listaRecibida)
+                mensajesAdapter.notifyDataSetChanged()
             } else {
                 Toast.makeText(this, "Error cargando mensajes: ${e.message}", Toast.LENGTH_SHORT).show()
             }
@@ -78,30 +76,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun iniciarLiveQuery() {
-        // Obtiene una instancia del cliente LiveQuery
-        // Se inicializa explícitamente con la URL de LiveQuery proporcionada por Back4App
-        val wssUri = URI("wss://livequeryuaa.b4a.io")
-        liveQueryClient = ParseLiveQueryClient.Factory.getClient(wssUri)
+        val uriWss = URI("wss://livequeryuaa.b4a.io")
+        clienteLiveQuery = ParseLiveQueryClient.Factory.getClient(uriWss)
 
-        val query = ParseQuery.getQuery<ParseObject>("Mensajes")
-        val subscription = liveQueryClient?.subscribe(query)
+        val consulta = ParseQuery.getQuery<ParseObject>("Mensajes")
+        val suscripcion = clienteLiveQuery?.subscribe(consulta)
 
-        subscription?.handleEvent(SubscriptionHandling.Event.CREATE) { _, obj ->
-            Log.d("LIVEQUERY", "Evento CREATE recibido: ${obj.getString("texto")}")
+        suscripcion?.handleEvent(SubscriptionHandling.Event.CREATE) { _, objetoParse ->
+            Log.d("LIVEQUERY", "Evento CREATE recibido: ${objetoParse.getString("texto")}")
             runOnUiThread {
-                mensajes.add(0, obj) // Añade al principio de la lista
-                adapter.notifyItemInserted(0)
-                recycler.scrollToPosition(0)
+                listaMensajes.add(0, objetoParse)
+                mensajesAdapter.notifyItemInserted(0)
+                listaMensajesView.scrollToPosition(0)
             }
         }
 
-        subscription?.handleEvent(SubscriptionHandling.Event.UPDATE) { _, obj ->
-            Log.d("LIVEQUERY", "Evento UPDATE recibido: ${obj.getString("texto")}")
+        suscripcion?.handleEvent(SubscriptionHandling.Event.UPDATE) { _, objetoParse ->
+            Log.d("LIVEQUERY", "Evento UPDATE recibido: ${objetoParse.getString("texto")}")
             runOnUiThread {
-                val index = mensajes.indexOfFirst { it.objectId == obj.objectId }
-                if (index != -1) {
-                    mensajes[index] = obj
-                    adapter.notifyItemChanged(index)
+                val indice = listaMensajes.indexOfFirst { it.objectId == objetoParse.objectId }
+                if (indice != -1) {
+                    listaMensajes[indice] = objetoParse
+                    mensajesAdapter.notifyItemChanged(indice)
                 }
             }
         }

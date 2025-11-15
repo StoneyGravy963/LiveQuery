@@ -12,39 +12,39 @@ import androidx.recyclerview.widget.RecyclerView
 import com.parse.ParseObject
 
 class MensajeAdapter(
-    private val context: Context,
-    private var mensajes: MutableList<ParseObject>
+    private val contexto: Context,
+    private var listaMensajes: MutableList<ParseObject>
 ) : RecyclerView.Adapter<MensajeAdapter.ViewHolder>() {
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val txtMensaje: TextView = view.findViewById(R.id.txtMensaje)
+        val textoMensajeView: TextView = view.findViewById(R.id.txtMensaje)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.item_mensaje, parent, false)
-        return ViewHolder(view)
+        val vista = LayoutInflater.from(contexto).inflate(R.layout.item_mensaje, parent, false)
+        return ViewHolder(vista)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val mensaje = mensajes[position]
-        holder.txtMensaje.text = mensaje.getString("texto")
+        val objetoMensaje = listaMensajes[position]
+        holder.textoMensajeView.text = objetoMensaje.getString("texto")
 
-        holder.txtMensaje.setOnClickListener {
-            val editText = EditText(context)
-            editText.setText(mensaje.getString("texto"))
+        holder.textoMensajeView.setOnClickListener {
+            val campoEditarTexto = EditText(contexto)
+            campoEditarTexto.setText(objetoMensaje.getString("texto"))
 
-            AlertDialog.Builder(context)
+            AlertDialog.Builder(contexto)
                 .setTitle("Editar mensaje")
-                .setView(editText)
+                .setView(campoEditarTexto)
                 .setPositiveButton("Guardar") { _, _ ->
-                    val nuevoTexto = editText.text.toString()
-                    mensaje.put("texto", nuevoTexto)
-                    mensaje.saveInBackground { e ->
+                    val textoNuevo = campoEditarTexto.text.toString()
+                    objetoMensaje.put("texto", textoNuevo)
+                    objetoMensaje.saveInBackground { e ->
                         if (e == null) {
-                            Toast.makeText(context, "✅ Actualizado", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(contexto, "Actualizado", Toast.LENGTH_SHORT).show()
                             notifyItemChanged(position)
                         } else {
-                            Toast.makeText(context, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(contexto, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -53,5 +53,5 @@ class MensajeAdapter(
         }
     }
 
-    override fun getItemCount(): Int = mensajes.size
+    override fun getItemCount(): Int = listaMensajes.size
 }
