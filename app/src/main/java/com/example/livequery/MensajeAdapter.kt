@@ -54,9 +54,4 @@ class MensajeAdapter(
     }
 
     override fun getItemCount(): Int = mensajes.size
-
-    fun updateList(newList: MutableList<ParseObject>) {
-        mensajes = newList
-        notifyDataSetChanged()
-    }
 }

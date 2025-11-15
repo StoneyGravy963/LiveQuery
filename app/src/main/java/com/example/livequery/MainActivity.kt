@@ -1,20 +1,24 @@
 package com.example.livequery
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.parse.ParseObject
 import com.parse.ParseQuery
+import com.parse.livequery.ParseLiveQueryClient
+import com.parse.livequery.SubscriptionHandling
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var recycler: RecyclerView
     private lateinit var adapter: MensajeAdapter
     private val mensajes = mutableListOf<ParseObject>()
+    private var liveQueryClient: ParseLiveQueryClient? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,26 +45,54 @@ class MainActivity : AppCompatActivity() {
                 if (e == null) {
                     Toast.makeText(this, "✅ Guardado", Toast.LENGTH_SHORT).show()
                     inputMensaje.text.clear()
-                    cargarMensajes()
+                    // El LiveQuery se encargará de actualizar la UI
                 } else {
                     Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        cargarMensajes()
+        cargarMensajesIniciales()
+        iniciarLiveQuery()
     }
 
-    private fun cargarMensajes() {
+    private fun cargarMensajesIniciales() {
         val query = ParseQuery.getQuery<ParseObject>("Mensajes")
         query.orderByDescending("createdAt")
         query.findInBackground { lista, e ->
             if (e == null) {
                 mensajes.clear()
                 mensajes.addAll(lista)
-                adapter.updateList(mensajes)
+                adapter.notifyDataSetChanged()
             } else {
-                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Error cargando mensajes: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun iniciarLiveQuery() {
+        liveQueryClient = ParseLiveQueryClient.Factory.getClient()
+
+        val query = ParseQuery.getQuery<ParseObject>("Mensajes")
+        val subscription = liveQueryClient?.subscribe(query)
+
+        subscription?.handleEvent(SubscriptionHandling.Event.CREATE) { _, obj ->
+            Log.d("LIVEQUERY", "Evento CREATE recibido: ${obj.getString("texto")}")
+            runOnUiThread {
+                mensajes.add(0, obj) // Añade al principio de la lista
+                adapter.notifyItemInserted(0)
+                recycler.scrollToPosition(0)
+            }
+        }
+
+        subscription?.handleEvent(SubscriptionHandling.Event.UPDATE) { _, obj ->
+            Log.d("LIVEQUERY", "Evento UPDATE recibido: ${obj.getString("texto")}")
+            runOnUiThread {
+                val index = mensajes.indexOfFirst { it.objectId == obj.objectId }
+                if (index != -1) {
+                    mensajes[index] = obj
+                    adapter.notifyItemChanged(index)
+                }
             }
         }
     }

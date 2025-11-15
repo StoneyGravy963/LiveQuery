@@ -10,9 +10,9 @@ class MyApp : Application() {
         // 🔹 Inicializa Parse al arrancar la app
         Parse.initialize(
             Parse.Configuration.Builder(this)
-                .applicationId("Aj7A5ON6a3mHS5IPZboi9JXrYVueDAfm0snSDYhC") // <-- tu Application ID
-                .clientKey("gIcsQ3YwaVGE8odrJOAjF9cnUhyYeLaR2tsMlfsm")   // <-- tu Client Key
-                .server("https://parseapi.back4app.com/")                // <-- tu URL del servidor
+                .applicationId("TzNHtrZ6cGuXstwMGVNtIL3bpzJbAlGmVZvua8nF")
+                .clientKey("aj5LYf4Xdyhz0Z3HrR3cZSHAok7xWxITyOSC2DCE")
+                .server("https://parseapi.back4app.com/")
                 .build()
         )
         println("✅ Parse inicializado correctamente")

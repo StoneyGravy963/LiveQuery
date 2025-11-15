@@ -42,6 +42,7 @@ android {
 
 dependencies {
     implementation ("com.github.parse-community.Parse-SDK-Android:parse:4.3.0")
+    implementation ("com.github.parse-community:ParseLiveQuery-Android:1.2.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
