@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun cargarMensajesIniciales() {
         val consulta = ParseQuery.getQuery<ParseObject>("Mensajes")
-        consulta.orderByDescending("createdAt")
+        consulta.orderByAscending("createdAt")
         consulta.findInBackground { listaRecibida, e ->
             if (e == null) {
                 listaMensajes.clear()
@@ -85,9 +85,9 @@ class MainActivity : AppCompatActivity() {
         suscripcion?.handleEvent(SubscriptionHandling.Event.CREATE) { _, objetoParse ->
             Log.d("LIVEQUERY", "Evento CREATE recibido: ${objetoParse.getString("texto")}")
             runOnUiThread {
-                listaMensajes.add(0, objetoParse)
-                mensajesAdapter.notifyItemInserted(0)
-                listaMensajesView.scrollToPosition(0)
+                listaMensajes.add(objetoParse)
+                mensajesAdapter.notifyItemInserted(listaMensajes.size - 1)
+                listaMensajesView.scrollToPosition(listaMensajes.size - 1)
             }
         }
 
